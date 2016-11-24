@@ -1,0 +1,105 @@
+//This sketch shows how to connect to a bluetooth device
+// Arduino -> bluetooth
+// Used with Android BlueTerm app
+
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+
+#include <SoftwareSerial.h> //Serial library
+
+/**
+ * Arduino connection HC-05 connection: 
+ * HC-05  | Arduino
+ * TX     | 5
+ * RX     | 6
+*/
+// Here, we exchange them -
+SoftwareSerial bt (5,6);  //RX, TX (Switched on the Bluetooth - RX -> TX | TX -> RX)
+
+
+//init pixel pin
+byte pixPin = 12;
+
+//init PIR sensors
+byte pir1 = 11; //physical pin 17
+byte pir2 = 10; //physical pin 16
+byte pir3 = 9; //physical pin 15
+
+//init PIR state
+int pirState=0;
+
+//init pixel strand
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(36, pixPin, NEO_GRB + NEO_KHZ800);
+
+//init bluetooth data
+int btdata; // the data given from the computer
+
+void setup() 
+{
+  //begin bt baudrate
+  bt.begin(115200);
+  //PIR sensor set as input
+  pinMode(pir1, INPUT);     // declare sensor as input
+  pinMode(pir2, INPUT);     // declare sensor as input
+  pinMode(pir3, INPUT);     // declare sensor as input
+  //start light off
+  strip.begin();
+  strip.show();
+}
+
+void loop() {
+  pirState = digitalRead(pir1) + digitalRead(pir2) + digitalRead(pir3);
+  if (pirState > 0) 
+ {
+  bt.print("1");
+  if (bt.available()) 
+  {
+    btdata = bt.read();
+    bt.print(btdata);
+    if (btdata == '2') {
+      //if 1
+      colorWipe(strip.Color(255, 0, 0),50);
+      delay(5000);
+    }
+    else if (btdata == '3') {
+      //if 1
+      colorWipe(strip.Color(0, 255, 0),50);
+      delay(5000);
+    }
+    else if (btdata == '4') {
+      //if 1
+      colorWipe(strip.Color(0, 0, 255),50);
+      delay(5000);
+    }
+    else if (btdata == '5') {
+      //if 1
+      colorWipe(strip.Color(127, 127, 127),50);
+      delay(5000);
+    }
+  }
+  delay (100); //prepare for data
+  }else{
+    colorWipeRev(strip.Color(0, 0, 0),50);
+    delay(300);
+  }
+}
+
+
+// Fill the dots one after the other with a color
+void colorWipe(uint32_t c, uint8_t wait) {
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+    strip.setPixelColor(i, c);
+    strip.show();
+    delay(wait);
+  }
+}
+void colorWipeRev(uint32_t c, uint8_t wait) {
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+    strip.setPixelColor((strip.numPixels()-1) - i, c);
+    strip.show();
+    delay(wait);
+  }
+}
